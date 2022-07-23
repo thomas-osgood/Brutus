@@ -29,7 +29,7 @@ def http_target_up(target, headers = None):
     success = bool()
 
     try:
-        if isinstance(target, str):
+        if not(isinstance(target, str)):
             raise ValueError(f"Target Must Be A String. Got {type(target)}")
 
         http_response = requests.get(target, headers = headers)
@@ -103,6 +103,48 @@ def gen_passwords(filename):
     return
 
 
+def make_request_http(target, payload, headers = None):
+    """
+    Function Name:
+        make_request_http
+    Author:
+        Thomas Osgood
+    Description:
+        Function designed to handle a POST request for brute force.
+    Input(s):
+        target - url to send POST request to.
+        payload - dictionary containing username and password fields and values.
+        headers - additional headers to send with request. optional.
+    Return(s):
+        message - status message.
+        response - response object from requests library.
+        success - boolean indication of success.
+        (response, success, message) - return format.
+    """
+    message = str()
+    response = None
+    success = bool()
+
+    try:
+        if headers is None:
+            headers = { "User-Agent": "Brutus" }
+
+        response = requests.post(target, data = payload, headers = headers)
+
+        if response.status_code >= 400:
+            raise ValueError(f"Bad Status Code: {response.status_code}")
+
+        message = f"Request Completed With Status Code: {response.status_code}"
+        success = True
+
+    except Exception as e:
+        message = e
+        response = None
+        success = False
+
+    return (response, success, message)
+
+
 def pass_worker_http(username, password, target, userfield = None, passfield = None):
     """
     Function Name:
@@ -135,6 +177,12 @@ def pass_worker_http(username, password, target, userfield = None, passfield = N
 
         payload[userfield] = username
         payload[passfield] = password
+
+
+        response, success, message = make_request_http(target, payload)
+
+        if not(success):
+            raise ValueError(f"Error Sending Request: {message}")
 
     except Exception as e:
         success = False
@@ -183,6 +231,12 @@ def user_worker_http(username, target, userfield = None, passfield = None):
         # Setup Payload Dictionary
         payload[userfield] = username
         payload[passfield] = password
+
+        response, success, message = make_request_http(target, payload)
+
+        if not(success):
+            raise ValueError(f"Error Sending Request: {message}")
+
     except Exception as e:
         success = False
         message = f"Status: {e}"
@@ -313,7 +367,7 @@ def main():
         elif attack == "ssh":
 
             if args.machine_ip is None:
-                raise argparse.ArgumentError("Must Specify Machine To SSH Brute FOrce. (-i or --ip)")
+                raise argparse.ArgumentError("Must Specify Machine To SSH Brute Force. (-i or --ip)")
             
             target = args.machine_ip
 
