@@ -1,0 +1,328 @@
+#!/usr/bin/env python3
+
+
+import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import os
+import random
+import requests
+import string
+
+
+def http_target_up(target, headers = None):
+    """
+    Function Name:
+        http_target_up
+    Author:
+        Thomas Osgood
+    Description:
+        Function designed to check that a website is reachable.
+    Input(s):
+        target - full url of login page to check.
+        headers - special http headers to include in request. optional.
+    Return(s):
+        message - status message.
+        success - boolean indication of successful connection.
+        (success, message) - return format.
+    """
+    message = str()
+    success = bool()
+
+    try:
+        if isinstance(target, str):
+            raise ValueError(f"Target Must Be A String. Got {type(target)}")
+
+        http_response = requests.get(target, headers = headers)
+
+        if http_response.status_code != 200:
+            raise ValueError(f"Bad Status Code Returned {http_response.status_code}")
+        
+        message = f"Successfully Connected To Target. (Code: {http_response.status_code})"
+        success = True
+    except Exception as e:
+        message = e
+        success = False
+
+    return (success, message)
+
+
+def attack_http(target, wordlist, username = None):
+    """
+    Function Name:
+        attack_http
+    Author:
+        Thomas Osgood
+    Description:
+        Function designed to brute force a website login. Uses POST request.
+    Input(s):
+        target - link to target login page.
+        wordlist - wordlist to use for brute-force attack.
+        username - if username is already known, use this. default = None.
+        thread_count - number of threads to use for attack. minimum = 1. maximum = 64. default = 10.
+    Return(s):
+        creds - credentials found. None if not found.
+        success - boolean indication of success.
+        message - status message.
+        (creds, success, message) - return format.
+    """
+    creds = str()
+    message = str()
+    success = bool()
+    return (creds, success, message)
+
+
+def gen_passwords(filename):
+    """
+    Function Name:
+        gen_passwords
+    Author:
+        Thomas Osgood
+    Description:
+        Function designed to generate passwords from a given wordlist. This is more
+        efficient than reading the entire file into memory, especially if the wordlist
+        file is large (ex: rockyou).
+    Input(s):
+        filename - wordlist filename to generate passwords from.
+    Return(s):
+        password - next password read from file. technically "yielded", not returned.
+    """
+    try:
+        # Validate Filename And Existance
+        exists, message = wordlist_exists(filename)
+
+        if not(exists):
+            raise ValueError(f"Wordlist Issue: {message}")
+
+        # Go Through Wordlist And Generate Passwords
+        with open(filename, "rb") as fptr:
+            for password in fptr:
+                yield password
+    except Exception as e:
+        print(f"[-] {e}")
+
+    return
+
+
+def pass_worker_http(username, password, target, userfield = None, passfield = None):
+    """
+    Function Name:
+        pass_worker_http
+    Author:
+        Thomas Osgood
+    Description:
+        Function designed to be a worker for bruting a username.
+    Input(s):
+        username - username to test the password for.
+        password - password to test the target for.
+        target - full url to test username on.
+        userfield - name of field used to transmit username. default = username.
+        passfield - name of field used to transmit password. default = password.
+    Return(s):
+        message - status message.
+        success - boolean indication of success.
+        (success, message) - return format
+    """
+    message = str()
+    payload = dict()
+    success = bool()
+
+    try:
+        if userfield is None:
+            userfield = "username"
+
+        if passfield is None:
+            passfield = "password"
+
+        payload[userfield] = username
+        payload[passfield] = password
+
+    except Exception as e:
+        success = False
+        message = f"Status: {e}"
+
+    return (success, message)
+
+
+def user_worker_http(username, target, userfield = None, passfield = None):
+    """
+    Function Name:
+        user_worker_http
+    Author:
+        Thomas Osgood
+    Description:
+        Function designed to be a worker for bruting a username.
+    Input(s):
+        username - name to test the target for.
+        target - full url to test username on.
+        userfield - name of field used to pass in username. default = username.
+        passfield - name of field used to pass in password. default = password.
+    Return(s):
+        message - status message.
+        success - boolean indication of success.
+        (success, message) - return format
+    """
+    alphabet = f"{string.ascii_lowercase}{string.ascii_uppercase}{string.digits}"
+    letters = list()
+    message = str()
+    password = str()
+    password_len = random.randint(5,10)
+    payload = dict()
+    success = bool()
+
+    try:
+        if userfield is None:
+            userfield = "username"
+
+        if passfield is None:
+            passfield = "password"
+
+        # Generate Random Password To Test With
+        letters = [random.choice(alphabet) for i in range(password_len)]
+        password = "".join(letters)
+
+        # Setup Payload Dictionary
+        payload[userfield] = username
+        payload[passfield] = password
+    except Exception as e:
+        success = False
+        message = f"Status: {e}"
+
+    return (success, message)
+
+
+def wordlist_exists(wordlist):
+    """
+    Function Name:
+        wordlist_exists
+    Author:
+        Thomas Osgood
+    Description:
+        Function designed to check if the wordlist provided exists and is a valid file.
+    Input(s):
+        wordlist - filename to check for.
+    Return(s):
+        message - status message.
+        success - boolean indication of success.
+        (success, message) - return format.
+    """
+    message = str()
+    success = bool()
+
+    try:
+        # Check If Wordlist Exists
+        if not(os.path.exists(wordlist)):
+            raise ValueError(f"\"{wordlist}\" Does Not Exist")
+
+        # Check If Wordlist Is A File
+        if not(os.path.isfile(wordlist)):
+            raise ValueError(f"\"{wordlist}\" Is Not A File")
+
+        success = True
+        message = f"\"{wordlist}\" Exists"
+    except Exception as e:
+        success = False
+        message = f"ERROR: {e}"
+
+    return (success, message)
+
+
+def main():
+    """
+    Function Name:
+        main
+    Author:
+        Thomas Osgood
+    Description:
+        Function designed to run if the program is run as main.
+    Input(s):
+        None
+    Return(s):
+        None
+    """
+    # Create List Of Allowed Attack Types
+    attacks = ["http", "ssh"]
+    target = str()
+
+    # Setup Arguments For Tool
+    parser = argparse.ArgumentParser()
+
+    ## Required Arguments
+    parser.add_argument("attack", help = "Type of attack to run.", choices = attacks)
+    parser.add_argument("wordlist", help = "Wordlist to use for attack.")
+
+    ## Optional Arguments
+    parser.add_argument("--userfail", help = "Phrase given when username incorrect. Default \"Incorrect Username\"", dest = "userfail")
+    parser.add_argument("--passfail", help = "Phrase given when password incorrect. Default \"Incorrect Password\"", dest = "passfail")
+
+    ### Attack-Type Specific Options
+    parser.add_argument("-i", "--ip", help = "IP address of target to attack. (Non-HTTP attacks only)", dest = "machine_ip")
+    parser.add_argument("-u", "--url", help = "URL of target for HTTP brute force.", dest = "url")
+
+    # Get Arguments From User
+    args = parser.parse_args()
+
+    attack = args.attack
+
+    print(f"[+] Attack Chosen: {attack}")
+
+    filename = args.wordlist
+
+    # Setup Check For Incorrect Username
+    username_fail_message = str()
+    if args.userfail:
+        username_fail_message = args.userfail
+    else:
+        username_fail_message = "Incorrect Username"
+
+    # Setup Check For Incorrect Password
+    password_fail_message = str()
+    if args.passfail:
+        password_fail_message = args.passfail
+    else:
+        password_fail_message = "Incorrect Password"
+    
+
+    try:
+
+        # Validate Given Wordlist
+        success, message = wordlist_exists(filename) 
+
+        if not(success):
+            raise ValueError(message)
+
+        print(f"[+] {message}")
+
+        # Validate Attack-Type Options
+        if attack == "http":
+
+            # URL Required For HTTP Brute
+            if args.url is None:
+                raise argparse.ArgumentError("Must Specify Target For HTTP Brute Force. (-u or --url)")
+            
+            target = args.url
+            print("[+] Target Set.")
+
+            # Make Sure Target Is Online
+            success, message = http_target_up(target)
+
+            if not(success):
+                raise ValueError(message)
+            
+            print(f"[+] {message}")
+
+        elif attack == "ssh":
+
+            if args.machine_ip is None:
+                raise argparse.ArgumentError("Must Specify Machine To SSH Brute FOrce. (-i or --ip)")
+            
+            target = args.machine_ip
+
+    except Exception as e:
+        print(f"[-] {e}")
+
+    return
+
+
+if __name__ == "__main__":
+    # If Tool Not Imported, Run MAIN Function
+    main()
