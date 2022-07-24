@@ -104,6 +104,9 @@ def attack_http(target, wordlist, userfail, passfail, username = None, thread_co
                 found_pass = passwd
                 break
 
+        if found_pass is None:
+            raise ValueError("No Password Found")
+
         creds = f"{found_user}:{found_pass}"
         message = f"Credentials Discovered: \"{creds}\""
         success = True
