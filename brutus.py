@@ -72,10 +72,24 @@ def attack_http(target, wordlist, userfail, passfail, username = None, thread_co
     creds = str()
     found_pass = None
     found_user = None
+    max_threads = 64
     message = str()
+    min_threads = 1
     success = bool()
 
     try:
+        # Thread Count Validation
+        if thread_count is None:
+            thread_count = 10
+        elif not(isinstance(thread_count, int)):
+            raise ValueError("thread_count must be an integer value.")
+        elif thread_count < min_threads:
+            print(f"[*] thread_count Less Than {min_threads}. Setting To {min_threads}.")
+            thread_count = min_threads
+        elif thread_count > max_threads:
+            print(f"[*] thread_count Greater Than {max_threads}. Setting To {max_threads}.")
+            thread_count = max_threads
+            
         if username is None:
             users = gen_passwords(wordlist)
 
