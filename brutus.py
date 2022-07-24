@@ -145,7 +145,7 @@ def make_request_http(target, payload, headers = None):
     return (response, success, message)
 
 
-def pass_worker_http(username, password, target, userfield = None, passfield = None):
+def pass_worker_http(username, password, target, passfail, userfield = None, passfield = None):
     """
     Function Name:
         pass_worker_http
@@ -157,6 +157,7 @@ def pass_worker_http(username, password, target, userfield = None, passfield = N
         username - username to test the password for.
         password - password to test the target for.
         target - full url to test username on.
+        passfail - incorrect password message to check for.
         userfield - name of field used to transmit username. default = username.
         passfield - name of field used to transmit password. default = password.
     Return(s):
@@ -184,6 +185,12 @@ def pass_worker_http(username, password, target, userfield = None, passfield = N
         if not(success):
             raise ValueError(f"Error Sending Request: {message}")
 
+        if passfail in response.text:
+            raise ValueError(f"Password \"{password}\" Incorrect")
+
+        message = f"Password Found: {password}"
+        success = True
+
     except Exception as e:
         success = False
         message = f"Status: {e}"
@@ -191,7 +198,7 @@ def pass_worker_http(username, password, target, userfield = None, passfield = N
     return (success, message)
 
 
-def user_worker_http(username, target, userfield = None, passfield = None):
+def user_worker_http(username, target, userfail, userfield = None, passfield = None):
     """
     Function Name:
         user_worker_http
@@ -202,6 +209,7 @@ def user_worker_http(username, target, userfield = None, passfield = None):
     Input(s):
         username - name to test the target for.
         target - full url to test username on.
+        userfail - incorrect username message to check for.
         userfield - name of field used to pass in username. default = username.
         passfield - name of field used to pass in password. default = password.
     Return(s):
@@ -236,6 +244,12 @@ def user_worker_http(username, target, userfield = None, passfield = None):
 
         if not(success):
             raise ValueError(f"Error Sending Request: {message}")
+
+        if userfail in response.text:
+            raise ValueError(f"Username \"{username}\" Incorrect")
+
+        message = f"Username Found: {username}"
+        success = True
 
     except Exception as e:
         success = False
