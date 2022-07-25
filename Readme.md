@@ -9,3 +9,7 @@ This tool is built for **educational** and **white-hat** purposes only.
 ## Overview
 
 Brutus is a brute-forcing tool built in Python3.
+
+## Contributors
+
+Thank you to all those who contribute to this tool.
