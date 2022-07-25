@@ -380,7 +380,9 @@ def main():
     parser.add_argument("wordlist", help = "Wordlist to use for attack.")
 
     ## Optional Arguments
+    parser.add_argument("-t", "--threads", help = "Number of threads to user. 1 to 64. Default 10.", dest = "threads", type = int)
     parser.add_argument("-u", "--username", help = "Specific username to brute-force.", dest = "username")
+
     parser.add_argument("--userfail", help = "Phrase given when username incorrect. Default \"Incorrect Username\".", dest = "userfail")
     parser.add_argument("--passfail", help = "Phrase given when password incorrect. Default \"Incorrect Password\".", dest = "passfail")
     parser.add_argument("--userfield", help = "Name of username input in HTTP form. Default \"username\".", dest = "userfield")
@@ -417,6 +419,13 @@ def main():
         password_fail_message = args.passfail
     else:
         password_fail_message = "Incorrect Password"
+
+    # Get Thread Count
+    thread_count = int()
+    if args.threads:
+        thread_count = args.threads
+    else:
+        thread_count = 10
     
 
     try:
@@ -464,7 +473,8 @@ def main():
             # Begin Attack
             creds, success, message = attack_http(
                         target, filename, username_fail_message, password_fail_message, 
-                        username = username, userfield = username_field_name, passfield = password_field_name
+                        username = username, userfield = username_field_name, passfield = password_field_name,
+                        thread_count = thread_count
                     )
 
             if not(success):
