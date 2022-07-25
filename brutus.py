@@ -380,8 +380,11 @@ def main():
     parser.add_argument("wordlist", help = "Wordlist to use for attack.")
 
     ## Optional Arguments
-    parser.add_argument("--userfail", help = "Phrase given when username incorrect. Default \"Incorrect Username\"", dest = "userfail")
-    parser.add_argument("--passfail", help = "Phrase given when password incorrect. Default \"Incorrect Password\"", dest = "passfail")
+    parser.add_argument("-u", "--username", help = "Specific username to brute-force.", dest = "username")
+    parser.add_argument("--userfail", help = "Phrase given when username incorrect. Default \"Incorrect Username\".", dest = "userfail")
+    parser.add_argument("--passfail", help = "Phrase given when password incorrect. Default \"Incorrect Password\".", dest = "passfail")
+    parser.add_argument("--userfield", help = "Name of username input in HTTP form. Default \"username\".", dest = "userfield")
+    parser.add_argument("--passfield", help = "Name of password input in HTTP form. Default \"password\".", dest = "userfield")
 
     ### Attack-Type Specific Options
     parser.add_argument("-i", "--ip", help = "IP address of target to attack. (Non-HTTP attacks only)", dest = "machine_ip")
@@ -395,6 +398,11 @@ def main():
     print(f"[+] Attack Chosen: {attack}")
 
     filename = args.wordlist
+
+    # Check For Target Username Passed In
+    target_username = None
+    if args.username:
+        target_username = args.username
 
     # Setup Check For Incorrect Username
     username_fail_message = str()
@@ -424,6 +432,20 @@ def main():
         # Validate Attack-Type Options
         if attack == "http":
 
+            # Setup Userfield
+            username_field_name = str()
+            if args.userfield:
+                username_field_name = args.userfield
+            else:
+                username_field_name = "username"
+
+            # Setup Passfield
+            password_field_name = str()
+            if args.userfield:
+                password_field_name = args.userfield
+            else:
+                password_field_name = "password"
+
             # URL Required For HTTP Brute
             if args.url is None:
                 raise argparse.ArgumentError("Must Specify Target For HTTP Brute Force. (-u or --url)")
@@ -438,6 +460,17 @@ def main():
                 raise ValueError(message)
             
             print(f"[+] {message}")
+
+            # Begin Attack
+            creds, success, message = attack_http(
+                        target, filename, username_fail_message, password_fail_message, 
+                        username = username, userfield = username_field_name, passfield = password_field_name
+                    )
+
+            if not(success):
+                raise ValueError("Brute Force Complete. No Credentials Found.")
+            
+            print(f"[+] Credentials Found: \"{creds}\"")
 
         elif attack == "ssh":
 
