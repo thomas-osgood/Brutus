@@ -112,7 +112,7 @@ def attack_http(target, wordlist, userfail, passfail, username = None, thread_co
 
         # Brute Force Password
         for passwd in passwds:
-            success, message = pass_worker_http(passwd, target, passfail, userfield = userfield, passfield = passfield)
+            success, message = pass_worker_http(found_user, passwd, target, passfail, userfield = userfield, passfield = passfield)
 
             if success:
                 found_pass = passwd
