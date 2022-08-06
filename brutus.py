@@ -93,13 +93,27 @@ def attack_http(target, wordlist, userfail, passfail, username = None, thread_co
         if username is None:
             users = gen_passwords(wordlist)
 
-            # Brute Force Username
-            for user in users:
-               success, message = user_worker_http(user, target, userfail, userfield = userfield, passfield = passfield) 
+            # Brute Force Username (Multi-Threaded)            
+            wordlist_len = len(users)
+            with ThreadPoolExecutor(max_workers=thread_count) as executor:
+                workers = executor.map(
+                    user_worker_http, users, [target] * wordlist_len, [userfail] * wordlist_len,
+                    userfield = [userfield] * wordlist_len, passfield = [passfield] * wordlist_len
+                )
+                try:
+                    for cur_user, success, message in workers:
+                        if success:
+                            found_user = cur_user
+                            executor.shutown(wait=False)
+                            break
 
-               if success:
-                   found_user = user
-                   break
+                except KeyboardInterrupt:
+                    message = "User Terminated Via KeyboardInterrupt"
+                    raise KeyboardInterrupt(message)
+                except Exception as ex:
+                    executor.shutdown(wait=False)
+                    message = str(ex)
+                    raise ex           
         else:
             found_user = username
 
@@ -126,7 +140,7 @@ def attack_http(target, wordlist, userfail, passfail, username = None, thread_co
         success = True
     except Exception as e:
         creds = None
-        message = e
+        message = str(e)
         success = False
 
     return (creds, success, message)
@@ -427,7 +441,6 @@ def main():
     else:
         thread_count = 10
     
-
     try:
 
         # Validate Given Wordlist
