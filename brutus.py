@@ -401,6 +401,7 @@ def main():
     # Create List Of Allowed Attack Types
     attacks = ["http", "ssh"]
     target = str()
+    thread_choices = list(range(1,65))
 
     # Setup Arguments For Tool
     parser = argparse.ArgumentParser()
@@ -410,8 +411,8 @@ def main():
     parser.add_argument("wordlist", help = "Wordlist to use for attack.")
 
     ## Optional Arguments
-    parser.add_argument("-t", "--threads", help = "Number of threads to user. 1 to 64. Default 10.", dest = "threads", type = int)
-    parser.add_argument("-u", "--username", help = "Specific username to brute-force.", dest = "username")
+    parser.add_argument("-t", "--threads", help = "Number of threads to user. 1 to 64. Default 10.", dest = "threads", type = int, choices=thread_choices)
+    parser.add_argument("-U", "--username", help = "Specific username to brute-force.", dest = "username")
 
     parser.add_argument("--userfail", help = "Phrase given when username incorrect. Default \"Incorrect Username\".", dest = "userfail")
     parser.add_argument("--passfail", help = "Phrase given when password incorrect. Default \"Incorrect Password\".", dest = "passfail")
@@ -512,9 +513,8 @@ def main():
             print(f"[+] Credentials Found: \"{creds}\"")
 
         elif attack == "ssh":
-
             if args.machine_ip is None:
-                raise argparse.ArgumentError("Must Specify Machine To SSH Brute Force. (-i or --ip)")
+                raise argparse.ArgumentError(None,"Must Specify Machine To SSH Brute Force. (-i or --ip)")
             
             target = args.machine_ip
 
