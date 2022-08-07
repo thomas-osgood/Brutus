@@ -482,6 +482,8 @@ def main():
             password_field_name = str()
             if args.passfield:
                 password_field_name = args.passfield
+            else:
+                password_field_name = "password"
             
             if args.url:
                 target = args.url
