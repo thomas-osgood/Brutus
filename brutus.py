@@ -104,7 +104,7 @@ def attack_http(target, wordlist, userfail, passfail, username = None, thread_co
                     for cur_user, success, message in workers:
                         if success:
                             found_user = cur_user
-                            executor.shutown(wait=False, cancel_futures=True)
+                            executor.shutown(wait=False)
                             break
 
                 except KeyboardInterrupt:
@@ -136,7 +136,7 @@ def attack_http(target, wordlist, userfail, passfail, username = None, thread_co
                 for cur_pass, success, message in workers:
                     if success:
                         found_pass = cur_pass
-                        executor.shutdown(wait=False, cancel_futures=True)
+                        executor.shutdown(wait=False)
                         break
             except KeyboardInterrupt:
                 message = "User Terminated Via KeyboardInterrupt"
