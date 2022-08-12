@@ -126,8 +126,7 @@ def generate_defaults(filename = None, start = None, end = None):
         base_words = [
                 "password",
                 "secret",
-                "root",
-                "toor"
+                "root"
         ]
 
         print("[*] Generating Base Words")
