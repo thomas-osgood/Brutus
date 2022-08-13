@@ -4,6 +4,26 @@ import argparse
 import os
 
 def attach_multiples(word, amount = None):
+    """
+    Function Name:
+        attach_multiples
+    Author:
+        Thomas Osgood
+    Description:
+        Function designed to take a generated password
+        and create a new one that contains multiple
+        instances of the original.
+
+        ex: hello -> hellohello
+    Input(s):
+        word - password to multiply
+        amount - amount of instances of password
+    Return(s):
+        message - status message.
+        permutations - list containing new passwords.
+        success - boolean indication of success.
+        (permutations, success, message) - return format.
+    """
     message = str()
     permutations = list()
     success = bool()
@@ -29,6 +49,27 @@ def attach_multiples(word, amount = None):
     return (permutations, success, message)
 
 def attach_numbers(word, start = None, end = None):
+    """
+    Function Name:
+        attach_numbers
+    Author:
+        Thomas Osgood
+    Description:
+        Function designed to create a list of passwords built
+        from an original password. These new passwords will
+        have a number appended to the end.
+
+        ex: password -> [password1, password2, ...]
+    Input(s):
+        word - password to append numbers to.
+        start - optional. number to start with. default 0.
+        end - optional. number to end with. default 1000.
+    Return(s):
+        message - status message.
+        numbered_words - list containing new passwords.
+        success - boolean indication of success.
+        (numbered_words, success, message) - return format.
+    """
     message = str()
     numbered_words = list()
     rmessage = str()
@@ -64,6 +105,23 @@ def attach_numbers(word, start = None, end = None):
     return (numbered_words, success, message)
 
 def attach_file(base_file, addon_file):
+    """
+    Function Name:
+        attach_file
+    Author:
+        Thomas Osgood
+    Description:
+        Function designed to append a file to another.
+        This is used to append all the temporary 
+        password files to the main password file.
+    Input(s):
+        base_file - main password file.
+        addon_file - file containing contents to append.
+    Return(s):
+        message - status message.
+        success - boolean indication of success.
+        (success, message) - return format.
+    """
     message = str()
     success = bool()
 
@@ -87,6 +145,23 @@ def attach_file(base_file, addon_file):
     return (success, message)
 
 def generate_defaults(filename = None, start = None, end = None):
+    """
+    Function Name:
+        generate_defaults
+    Author:
+        Thomas Osgood
+    Description:    
+        Function designed to generate a "default" password
+        list based on predefined base passwords.
+    Input(s):
+        filename - name of the password file to create. default passwords.txt.
+        start - start index for numbered passwords.
+        end - end index for numbered passwords.
+    Return(s):
+        message - status message.
+        success - boolean indication of success.
+        (success, message) - return format.
+    """
     message = str()
     permutations = list()
     rmessage = str()
@@ -208,6 +283,26 @@ def generate_defaults(filename = None, start = None, end = None):
     return (success, message)
 
 def generate_permutations(word):
+    """
+    Function Name:
+        generate_permutations
+    Author:
+        Thomas Osgood
+    Description:
+        Function designed to generate various permutations
+        of a given password.
+
+        Manipulates the capitalization of the letters.
+
+        ex: password -> paSsword
+    Input(s):
+        word - base password to create permutations from.
+    Return(s):
+        message - status message.
+        permutations - list containing new passwords.
+        success - boolean indication of success.
+        (permutations, success, message) - return format.
+    """
     permutations = list()
     message = str()
     success = bool()
@@ -251,6 +346,21 @@ def generate_permutations(word):
     return (permutations, success, message)
 
 def read_base_gen(filename):
+    """
+    Function Name:
+        read_base_gen
+    Author:
+        Thomas Osgood
+    Description:
+        Function desgined to create a generator yielding
+        the passwords contained within a given file.
+    Input(s):
+        filename - file to use for generator.
+    Return(s):
+        None
+    Yields:
+        line - current password in file.
+    """
     try:
         if not(isinstance(filename,str)):
             raise ValueError(f"filename must be string. Got {type(filename)}")
@@ -260,8 +370,79 @@ def read_base_gen(filename):
                 yield line.strip("\n")
     except Exception as ex:
         return
+    return
+
+def replace_chars(word):
+    """
+    Function Name:
+        replace_chars
+    Author:
+        Thomas Osgood
+    Description:
+        Function designed to create a list of passwords
+        containing new passwords that have their letters
+        replaced with numbers that look like the original
+        letters.
+    Input(s):
+        word - word to create permutations from.
+    Return(s):
+        message - status message.
+        permutation - new password containing replaced letters.
+        success - boolean indication of success.
+        (permutation, success, message) - return format.
+    """
+    message = str()
+    permutation = str()
+    success = bool()
+
+    numlet_mapping = {
+            "o": "0",
+            "e": "3",
+            "l": "1",
+            "t": "7",
+            "s": "5",
+            "a": "4",
+            "g": "6"
+    }
+
+    try:
+        char_list = list(word)
+        new_word = list()
+
+        for cur_char in char_list:
+            new_word.append(numlet_mapping.get(cur_char.lower(),cur_char))
+
+        permutation = "".join(new_word)
+
+        message = "Permutations successfully generated."
+        success = True
+    except Exception as ex:
+        message = str(ex)
+        success = False
+
+    return (permutation, success, message)
 
 def validate_range(start, end):
+    """
+    Function Name:
+        validate_range
+    Author:
+        Thomas Osgood
+    Description:    
+        Function designed to validate a given range.
+        This function makes sure the start >= end.
+        Also makes sure that start is >= 0 
+        and end >= 0.
+    Input(s):
+        start - beginning of range.
+        end - end of rance.
+    Return(s):
+        end - corrected (or original) end.
+        message - status message.
+        start - corrected (or original) beginning.
+        success - boolean indication of success.
+        (start, end, success, message) - return format.
+    """
     message = str()
     success = bool()
 
@@ -293,6 +474,19 @@ def validate_range(start, end):
     return (start, end, success, message)
 
 def main():
+    """
+    Function Name:
+        main
+    Author:
+        Thomas Osgood
+    Description:
+        The function that will execute when the 
+        program is executed is not imported.
+    Input(s):
+        None
+    Return(s):
+        None
+    """
     message = str()
     success = bool()
     words = list()
